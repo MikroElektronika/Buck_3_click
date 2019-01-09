@@ -1,0 +1,73 @@
+'
+'Example for Buck3 Click
+'
+'    Date          : Jan 2018.
+'    Author        : MikroE Team
+'
+'Test configuration AVR :
+'    
+'    MCU              : ATMEGA32
+'    Dev. Board       : EasyAVR v7 
+'    AVR Compiler ver : v7.0.1.0
+'
+'---
+'Description :
+'
+'The demo application is composed of three sections :
+'
+'- System Initialization - Initializes CS pin as INPUT and RST pin as OUTPUT.
+'- Application Initialization - Initializes Driver init and puts the device in ACTIVE mode.
+'- Application Task - (code snippet) - Sequentialy, each one second, checks the status of the 
+'  Buck 3 Click and if the overvoltage detected or device is under thermal shutdown 
+'  it logs a message on the USBUART.
+'  Note: Open Drain Power Good Indicator, it is asserted low if output voltage is out of PGOOD threshold, 
+'  Overvoltage or if the device is under thermal shutdown, EN shutdown or during soft start.
+'  Once the FB pin voltage is between 93% and 107% of the internal reference voltage (VREF) the PGOOD is pulled high.
+'
+'
+program Click_Buck3_AVR
+
+include Click_Buck3_types
+include Click_Buck3_config
+
+dim
+    statePG as uint8_t 
+    
+sub procedure systemInit() 
+
+    mikrobus_gpioInit(_MIKROBUS1, _MIKROBUS_CS_PIN, _GPIO_INPUT) 
+    mikrobus_gpioInit(_MIKROBUS1, _MIKROBUS_RST_PIN, _GPIO_OUTPUT) 
+    mikrobus_logInit(_LOG_USBUART, 9600) 
+    mikrobus_logWrite("Initializing...", _LOG_LINE) 
+    Delay_ms(100) 
+
+end sub
+
+sub procedure applicationInit() 
+
+    buck3_gpioDriverInit(T_BUCK3_P(@_MIKROBUS1_GPIO)) 
+    buck3_enable(_BUCK3_ACTIVE) 
+    mikrobus_logWrite("Buck 3 is activated", _LOG_LINE) 
+    Delay_1sec() 
+
+end sub
+
+sub procedure applicationTask() 
+
+    statePG = buck3_getState() 
+    if ((statePG = 0)) then 
+        mikrobus_logWrite("Overvoltage or thermal shutdown detected", _LOG_LINE) 
+    end if
+    Delay_1sec() 
+
+end sub
+
+main :
+
+    systemInit() 
+    applicationInit() 
+    while (1) 
+        applicationTask() 
+    wend
+
+end.

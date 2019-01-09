@@ -1,0 +1,5 @@
+module Click_Buck3_config
+
+include Click_Buck3_types
+
+end.
